@@ -1,0 +1,35 @@
+@CHARSET "UTF-8";
+
+ul.navi,
+ul.navi > li > ul {
+    list-style: none;
+    margin-bottom: 0px;
+}
+ul.navi {
+    padding-left: 0px;
+}
+ul.navi > li > ul {
+    border-top : 1px solid #ddd;
+    margin-top : 10px;
+    padding-left: 50px;
+    display: none;
+}
+ul.navi > li,
+ul.navi > li > ul > li {
+    border-bottom : 1px solid #ddd;
+    padding : 10px 0 10px 0;
+}
+ul.navi > li:last-child,
+ul.navi > li > ul > li:last-child {
+    border-bottom: none;
+}
+ul.navi > li > ul > li:last-child {
+    padding-bottom: 0px;
+}
+ul.navi a {
+	color: black;
+	text-decoration: none;
+}
+ul.navi li[class*="active"] > a::before {
+	content: "▶ ";
+}

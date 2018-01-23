@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- @version test -->
+<navigation>
+    <board>
+        <label>게시판</label>
+        <module>default</module>
+        <controller>board_board</controller>
+        <action>list</action>
+        <accesskey>A</accesskey>
+		<params>
+        	<noBoard>1</noBoard>
+        </params>
+        <pages>
+	        <total>
+		        <label>전체글보기</label>
+		        <module>default</module>
+		        <controller>board_board</controller>
+		        <action>list</action>
+		        <params>
+		        	<noBoard>1</noBoard>
+		        </params>
+		        <pages>
+		        	<read>
+		        		<label>게시글 열람</label>
+				        <module>default</module>
+				        <controller>board_board</controller>
+				        <action>read-content</action>
+				        <visible>0</visible>
+		        	</read>
+		        	<edit>
+			        	<label>게시글 수정</label>
+				        <module>default</module>
+				        <controller>board_board</controller>
+				        <action>edit-content</action>
+				        <visible>0</visible>
+		        	</edit>
+		        </pages>
+	        </total>
+        </pages>
+    </board>
+    <gallery>
+        <label>갤러리</label>
+        <module>default</module>
+        <controller>gallery_gallery</controller>
+        <action>total-list</action>
+    </gallery>
+    <config>
+        <label>설정</label>
+        <module>default</module>
+        <controller>board_config</controller>
+        <action>index</action>
+        <pages>
+            <board>
+                <label>게시판 설정</label>
+		        <module>default</module>
+		        <controller>board_config</controller>
+		        <action>index</action>
+            </board>
+        </pages>
+    </config>
+</navigation>

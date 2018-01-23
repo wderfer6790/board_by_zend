@@ -1,0 +1,128 @@
+<style>
+div.tagDiv {
+	margin-top: 10px;
+	margin-bottom: 10px;
+}
+div.uploadFileDiv {
+	margin-top: 10px;
+	margin-bottom: 10px;
+}
+span.fileDownload,
+span.fileDeleteBtn {
+	cursor: pointer;
+}
+span.fileDeleteBtn {
+	float: right;
+}
+
+input[type=file].contentFiles,
+button.removeFile {
+	display: inline-block;
+	vertical-align: middle;
+}
+#downloadIframe {
+    display: none;
+}
+</style>
+<?php
+$this->headScript()->appendFile($this->baseUrl('smartEditer2/js/service/HuskyEZCreator.js'));
+$action = $this->contentPk ? "수정" : "작성";
+
+$content =
+    "<div class=\"form-group\">" 
+    .$this->formText("contentTitle", $this->contentRow ? $this->contentRow->title : null, array("class" => "form-control"))
+    . "</div>"
+    . "<div class=\"form-group\">"
+    . $this->formTextarea("contentEdit", $this->contentRow ? $this->contentRow->content : null, array("rows" => 10, "cols" => 100, "class" => "form-control"))
+    . "</div>"
+    . "<div class=\"form-group\">"
+    . $this->formLabel("contentTag-label", "태그", array("for" => "contentTag"))
+    . $this->formText("contentTag", $this->contentRow ? $this->contentRow->tag : null, array("class" => "form-control"))
+    . "</div>";
+
+$content .= "<div id=\"filesDiv\" class=\"panel panel-default\">";
+$content .= "<div class=\"panel-heading\">파일 업로드</div>";
+$content .= "<div class=\"panel-body\">";
+
+if ($this->fileRows && $this->fileRows->count() > 0) {
+	foreach ($this->fileRows as $row) {
+		$content .= "<div class=\"well well-sm\"><span class=\"fileDownload\" data-file-pk=\"{$row->pk}\">{$row->fileName}</span>";
+		$content .= "<span class=\"fileDeleteBtn glyphicon glyphicon-remove\" data-file-pk=\"{$row->pk}\"></span></div>";
+	}
+}
+
+$content .= "<div class=\"uploadFileDiv\">" . $this->formFile("contentFile", array("class" => "contentFiles")) . "</div>";
+$content .= $this->formButton("addfileInput", "파일입력 추가", array("class" => "btn btn-xs"));
+$content .= "</div>";
+$content .= "</div>";
+$content .= $this->formButton("editBtn", $action, array("class" => "btn"))
+    . $this->formHidden('boardPk', $this->boardPk)
+    . $this->formHidden('contentPk', $this->contentPk);
+    
+echo $this->form("contentForm", array("method" => Zend_Form::METHOD_POST, "enctype" => "multipart/form-data"), $content);
+?>
+
+<iframe id = "downloadIframe" src=""></iframe>
+
+<script type="text/javascript">
+var oEditors = [];
+nhn.husky.EZCreator.createInIFrame({
+    oAppRef: oEditors,
+    elPlaceHolder: "contentEdit",
+    sSkinURI: "/smartEditer2/SmartEditor2Skin.html",
+    fCreator: "createSEditor2"
+});
+
+$(document).ready(function(){
+	$("#editBtn").on("click", function(){
+		if (confirm("<?php echo $action?>" + "하시겠습니까?")) {
+	    	oEditors.getById["contentEdit"].exec("UPDATE_CONTENTS_FIELD", []);
+	    
+	    	$("#contentForm").submit();
+		}
+	});
+
+	$(".fileDownload").on("click", function(){
+		if (confirm("'" + $(this).text() + "'를 다운로드 하시겠습니까?")) {
+			  $("#downloadIframe").attr("src", "/board_board/download-content-file/filePk/" + $(this).data("filePk"));
+		}
+	});
+
+	$("#addfileInput").on("click", function(){
+		var clone = $(".uploadFileDiv:first").clone();
+		var cloneIdentity = ($(".contentFiles").length + 1);
+
+		clone.attr("id", "uploadFileDiv" + cloneIdentity);
+		clone.children("#contentFile").attr({"id": "contentFile" + cloneIdentity, "name" : "contentFile" + cloneIdentity});
+		clone.append("&nbsp; &nbsp;<button type=\"button\" class=\"removeFile btn btn-xs\" data-target=\""+ clone.attr('id') +"\"><span class=\"glyphicon glyphicon-remove\"></span></button>");
+		
+		$("#filesDiv > div.panel-body").append(clone);
+	});
+
+	$(document).on("click", ".removeFile", function(e){
+		$("#"+$(this).data('target')).remove();
+		$(this).remove();
+	});	
+
+	$(".fileDeleteBtn").on("click", function(){
+		if (confirm("'" + $(this).prev().text() + "'를 삭제하시겠습니까?")) {
+    		var filePk = $(this).data("filePk");
+    		var parent = $(this).parent();
+    		$.ajax({
+    			url:"/board_board/delete-content-file",
+    			type:"POST",
+    			dataType:"json",
+    			data:{"filePk" : filePk},
+    			success:function(data){
+    				if (data.result) {
+    					alert(data.message);
+    					parent.remove();
+    				} else {
+    					alert("파일 삭제중 문제가 발생하였습니다.\n" + data.message);
+    				}
+    			}
+    		});
+		}
+	});
+});
+</script>

@@ -1,0 +1,114 @@
+<style>
+#addForm {
+	padding-bottom: 20px;
+}
+#tableList th,
+#tableList td {
+	text-align:center;
+}
+</style>
+<?php
+echo $this->addForm;
+?>
+<table id="tableList"class="table table-hover">
+    <tr>
+        <th class="name col-xs-6">게시판명</th>
+        <th class="ordered col-xs-1">정렬순서</th>
+        <th class="isDisplay col-xs-1">표시유무</th>
+        <th class="work col-xs-4">작업</th>
+    </tr>
+<?php
+if (count($this->boards) > 0) {
+    foreach ($this->boards as $row) {
+        $boardList = $this->boardList;
+        unset($boardList[$row->pk]);
+        echo "<tr>";
+        echo "<td class=\"name\">".$this->formText("name".$row->pk, $row->name, array("class" => "form-control input-sm"))."</td>";
+        echo "<td class=\"ordered\">".$this->formText("ordered".$row->pk, $row->ordered, array("class" => "form-control input-sm"))."</td>";
+        echo "<td class=\"isDisplay\">".$this->formCheckbox("isDisplay".$row->pk, $row->isDisplay, array(
+        	"checked" => $row->isDisplay ? "checked" : ""
+        ))."</td>";
+        echo "<td class=\"work\">";
+        echo $this->formButton("editBtn".$row->pk, "수정", array("class" => "btn btn-sm editBtn", "data-pk" => $row->pk));
+        echo "&nbsp;" . $this->formSelect("boardList".$row->pk, "", array("class" => "form-control input-sm", "style" => "display:inline-block; width:auto;"), $boardList);
+        echo "&nbsp;" . $this->formButton("moveBtn".$row->pk, "게시글 이동", array("class" => "btn btn-sm moveBtn", "data-pk" => $row->pk));
+        echo "&nbsp;" . $this->formButton("deleteBtn".$row->pk, "삭제", array("class" => "btn btn-sm deleteBtn", "data-pk" => $row->pk));
+        echo "</td>";
+        echo "</tr>";
+    }
+} else {
+    echo "<td rowspan=4>생성된 게시판이 없습니다.</td>";
+}
+?>
+</table>
+<script>
+$(document).ready(function(){
+	$(".editBtn").on("click", function(){
+		if (confirm("수정하시겠습니까?")) {
+			var pk = $(this).data("pk");
+	        $.ajax({
+	        	url: "/board_config/board-edit",
+	            type: "POST",
+	            dataType: "json",
+	            data: {
+	                "pk" : pk,
+	                "name" : $("#name" + pk).val(),
+	                "ordered" : $("#ordered" + pk).val(),
+	                "isDisplay" : $("#isDisplay" + pk).is(":checked") ? 1 : 0,
+	            },
+	            success: function(data) {
+	                var message = data.result ? "수정되었습니다." : "수정 중 문제가 발생하였습니다.\n" + data.message;                               
+	                  
+	            	alert(message);
+	            }
+	        });
+		}
+	});
+
+	$(".moveBtn").on("click", function(){
+		if (confirm("게시판의 게시물을 이동하시겠습니까?")) {
+			var pk = $(this).data("pk");
+			var movePk = $("#boardList" + pk).val(); 
+			if (!movePk) {
+				alert("이동할 게시판을 선택해주세요.");
+				return false;
+			}
+			
+	        $.ajax({
+	        	url: "/board_config/board-move",
+	            type: "POST",
+	            dataType: "json",
+	            data: {
+                    "pk" : pk,
+                    "movePk" : movePk,
+	            },
+	            success: function(data) {
+	                var message = data.result ? data.message : "게시글 이동 중 문제가 발생하였습니다.\n" + data.message;                               
+	                  
+	            	alert(message);
+	            }
+	        });
+		}
+	});
+
+	$(".editBtn").on("click", function(){
+		if (confirm("게시판을 삭제하시겠습니까?")) {
+			var pk = $(this).data("pk");
+	        $.ajax({
+	        	url: "/board_config/board-delete",
+	            type: "POST",
+	            dataType: "json",
+	            data: {
+	                "pk" : pk,
+	            },
+	            success: function(data) {
+	            	var message = data.result ? data.message : "게시판 삭제 중 문제가 발생하였습니다.\n" + data.message;                               
+	                  
+	            	alert(message);
+	            }
+	        });
+		}
+	});
+	
+});
+</script>

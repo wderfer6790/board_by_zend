@@ -1,0 +1,34 @@
+<?php
+if ($this->pageCount) {
+    $indent = "    ";
+    
+    $pagination = "<nav id=\"paginatorNav\">"; 
+    $pagination .=  PHP_EOL . $indent . "<ul class=\"pagination\">";
+    
+    //first
+    $pagination .=  PHP_EOL . $indent . $indent . "<li class=\"" . ($this->first == $this->current ? "disabled" : "") . "\">";
+    $pagination .=  "<a href=\"#\" data-page=\"{$this->first}\">&lt;&lt;</a></li>";
+    
+    // previous
+    $pagination .=  PHP_EOL . $indent . $indent . "<li class=\"" . (!isset($this->previous) ? "disabled" : "") . "\">";
+    $pagination .=  "<a href=\"#\" data-page=\"{$this->previous}\">&lt;</a></li>";
+
+    // pages
+    foreach($this->pagesInRange as $page) {
+        $active = $page == $this->current ? "active" : "";
+        $pagination .=  PHP_EOL . $indent . $indent . "<li class=\"{$active}\"><a href=\"#\" data-page=\"{$page}\">{$page}</a></li>";
+    }
+    
+    // next
+    $pagination .=  PHP_EOL . $indent . $indent . "<li class=\"" . (!isset($this->next) ? "disabled" : "") . "\">";
+    $pagination .=  "<a href=\"#\" data-page=\"{$this->next}\">&gt;</a></li>";
+    
+    // last
+    $pagination .=  PHP_EOL . $indent . $indent . "<li class=\"" . ($this->last == $this->current ? "disabled" : "") . "\">";
+    $pagination .=  "<a href=\"#\" data-page=\"{$this->last}\">&gt;&gt;</a></li>";
+    
+    $pagination .=  PHP_EOL . $indent . "</ul>";
+    $pagination .=  "</nav>";
+    
+    echo $pagination;
+}

@@ -1,0 +1,35 @@
+<?php
+$indent = $this->navigation()->menu()->getIndent();
+
+$contents = PHP_EOL . $indent . "<ul class=\"" . $this->navigation()->menu()->getUlClass() . "\">";
+foreach ($this->container as $page) {
+    $contents .= renderPage($this, $page, $indent . "    ");
+}
+
+$contents .= PHP_EOL . $indent . "</ul>";
+echo $contents;
+
+/**
+ * @param Zend_View $view
+ * @param Zend_Navigation_Page $page
+ * @param string $indent
+ * @return string
+ */
+function renderPage(Zend_View $view, Zend_Navigation_Page $page, $indent = "") {
+    if (!$page->isVisible()) {
+        return '';
+    }
+    
+    $render = PHP_EOL . $indent . "<li class=\"" . ($page->isActive(true) ? "active" : "") . "\">" . $view->navigation()->menu()->htmlify($page);
+    if ($page->hasPages()) {
+        $render .= PHP_EOL . $indent . "<ul>";
+        foreach ($page->getPages() as $subPage) {
+            $render .= renderPage($view, $subPage, $indent . "    ");
+        }
+        $render .= PHP_EOL . $indent . "</ul>";
+    }
+    $render .= PHP_EOL . $indent . "</li>";
+    
+    return $render;
+} 
+?>

@@ -1,0 +1,321 @@
+<style>
+input[type='password'].delPassword {
+	display:none;
+}
+
+div.commentBox {
+	margin: 10px 0 10px 0;
+	padding: 10px 0 10px 20px; 
+}
+
+div.commentBox, div.subComment {
+	border-top: 1px solid #ddd;
+}
+div.addCommentBox, div.commentBox > div.comment, div.subComment {
+	margin-top: 10px;
+}
+div.addCommentBox {
+	padding-right: 50px;
+}
+
+div.subComment {
+	margin-left: 40px;
+}
+
+button.addCommentBtn {
+	clear:both;
+}
+div#content-header {
+	margin-top: 20px;
+	margin-bottom: 20px;
+}
+div#content-body {
+	padding-left: 20px;
+	max-width: 100%;
+	max-height: 100%;
+	min-height: 300px;
+}
+div#tagDiv {
+	padding-left: 20px;
+	margin-top: 20px;
+	margin-bottom: 20px;
+}
+#downloadIframe {
+    display: none;
+}
+span.fileDownload {
+	cursor: pointer;
+}
+div#commentList {
+	margin-top: 60px;
+	border-top: 1px solid #ddd;
+}
+div.addCommentBox .form-horizontal .form-group {
+	margin-left: 0;
+	margin-right: 0;
+}
+</style>
+
+<div id="content-header">
+    <h3>
+    <?php echo $this->contentRow->title;?>
+    <small>
+    <?php echo $this->contentRow->updateTime != "0000-00-00 00:00:00" ? $this->contentRow->insertTime : $this->contentRow->insertTime; ?>
+    </small>
+    </h3>
+</div>
+
+<div id="content-body">
+<?php echo $this->contentRow->content;?>
+</div>
+
+<div id="tagDiv">
+    <span class="glyphicon glyphicon-tag"></span> <?php echo $this->contentRow->tag; ?>
+</div>
+
+<div id="fileDiv" class="panel panel-default">
+    <div class="panel-heading">업로드 파일</div>
+    <div class="panel-body">
+<?php 
+foreach ($this->fileRows as $row) {
+    echo "<div class=\"well well-sm\"><span class=\"fileDownload\" data-file-pk=\"{$row->pk}\">{$row->fileName}</span></div>";
+}
+?>
+    </div>
+</div>
+
+<?php 
+echo $this->formButton("editBtn", "수정", array("class" => "btn btn-sm", "data-content-pk" => $this->contentRow->pk));
+echo "&nbsp;" . $this->formButton("deleteBtn", "삭제", array("class" => "btn btn-sm", "data-content-pk" => $this->contentRow->pk));
+?>
+
+<div id="commentList">
+    <h4>코멘트</h4>
+    <div class="addCommentBox">
+        <div class="form-inline" style="margin-bottom: 10px;">
+<?php
+echo "<div class=\"form-group\" style=\"margin-right: 20px;\">";
+echo $this->formText("commentWriter", null, array("id" => "", "class" => "commentWriter form-control input-sm"));
+echo "</div>";
+echo "<div class=\"form-group\" style=\"margin-right: 10px;\">";
+echo $this->formLabel("editPassword-label", "비밀번호", array("for" => "editPassword", "style" => "margin-right: 5px;"));
+echo $this->formPassword("editPassword", null, array("id" => "", "class" => "editPassword form-control input-sm", "style" => "margin-right: 10px;"));
+echo "</div>";
+echo "<div class=\"form-group\">";
+echo $this->formButton("addCommentBtn", "작성", array("id" => "", "class" => "addCommentBtn btn btn-sm", "data-content-pk" => $this->contentRow->pk));
+echo "</div>";
+?>
+        </div>
+<?php 
+echo $this->formTextarea("comment", null, array("id" => "", "class" => "comment form-control", "rows" => "3", "cols" => "100"));
+?>
+    </div>
+<?php
+foreach ($this->comments as $commentRow) {
+    echo "<div class=\"commentBox\">";
+    echo "<div class=\"comment\">";
+    echo "<p class=\"commentTitle\"><span class=\"writer\">{$commentRow->writer}</span>";
+    echo "&nbsp; &nbsp;<small>" . ($commentRow->updateTime != "0000-00-00 00:00:00" ? $commentRow->insertTime : $commentRow->insertTime) . "</small></p>";
+    echo "<p class=\"comment\">" . $commentRow->comment . "</p>";
+    echo $this->formButton("showEditComment", "수정", array("id" => "", "class" => "showEditComment btn btn-xs", "data-comment-pk" => $commentRow->pk));
+    echo "&nbsp;" . $this->formPassword("delPassword", null, array("id" => "", "class" => "delPassword form-control"));
+    echo "&nbsp;" . $this->formButton("deleteBtn", "삭제", array("id" => "", "class" => "deleteCommentBtn btn btn-xs", "data-comment-pk" => $commentRow->pk));
+    echo "&nbsp;" . $this->formButton("reCommentBtn", "답글", array("id" => "", "class" => "showReComment btn btn-xs", "data-comment-pk" => $commentRow->pk));
+    echo "</div>";
+    foreach ($this->subComments as $subCommentRow) {
+        if ($commentRow->pk != $subCommentRow->parentPk) continue;
+        
+        echo "<div class=\"subComment\">";
+        echo "<div class=\"comment\">";
+        echo "<p class=\"commentTitle\"><span class=\"writer\">{$subCommentRow->writer}</span>";
+        echo "&nbsp; &nbsp;<small>" . ($subCommentRow->updateTime != "0000-00-00 00:00:00" ? $subCommentRow->insertTime : $subCommentRow->insertTime) . "</small></p>";
+        echo "<p class=\"comment\">" . $subCommentRow->comment . "</p>";
+        echo $this->formButton("editBtn", "수정", array("id" => "", "class" => "showEditComment btn btn-xs", "data-comment-pk" => $subCommentRow->pk));
+        echo $this->formPassword("delPassword", null, array("id" => "", "class" => "delPassword form-control"));
+        echo $this->formButton("deleteBtn", "삭제", array("id" => "", "class" => "deleteCommentBtn btn btn-xs", "data-comment-pk" => $subCommentRow->pk));
+        echo "</div>";
+        echo "</div>";
+    }
+    echo "</div>";
+}
+?>
+</div>
+<iframe id="downloadIframe"></iframe>
+
+<script type="text/javascript">
+$(document).ready(function(){
+	var message = "<?php echo $this->message; ?>";
+	if (message) {
+		alert($("#message").val());
+	}
+
+	$(".fileDownload").on("click", function(){
+		if (confirm("'" + $(this).text() + "'를 다운로드 하시겠습니까?")) {
+			  $("#downloadIframe").attr("src", "/board_board/download-content-file/filePk/" + $(this).data("filePk"));
+		}
+	});	
+
+	$("#editBtn").on("click", function(){
+		window.location = "/board_board/edit-content/contentPk/" + $(this).data("content-pk");
+	});
+
+	$("#deleteBtn").on("click", function() {
+		var pk = $(this).data("content-pk");
+		if (confirm("게시글을 삭제하시겠습니까?")) {
+	    	$.ajax({
+	    		url:'/board_board/delete-content',
+	    		type: 'POST',
+	    		dataType: 'json',
+	    		data: {'contentPk' : pk},
+	    		success: function(data){
+	            	alert(data.result ? data.message : "게시글 삭제 중 문제가 발생하였습니다.\n" + data.message);
+	            	window.location = "/board_board/list/boardPk/<?php echo $this->contentRow->boardPk;?>";
+	    		}
+	    	});	
+		}
+	});
+
+	$(document).on("click", ".addCommentBtn", function(){
+		if (confirm("댓글 작성하시겠습니까?")) {
+			var commentDiv = $(this).parents("div.addCommentBox");
+			var contentPk = $(this).data("contentPk");
+
+			$.ajax({
+				url : '/board_board/edit-comment',
+			    type : 'POST',
+			    dataType : 'json',
+			    data : {
+				    'contentPk' : contentPk,
+				    'writer' : commentDiv.find(".commentWriter").val(),
+				    'password' : commentDiv.find(".editPassword").val(),
+				    'comment' : commentDiv.find(".comment").val()
+			    },
+			    success : function(data){
+			    	alert(data.result ? data.message : "댓글 작성 중 문제가 발생하였습니다.\n" + data.message);
+				    if (data.result) {
+				    	window.location.reload();
+				    }
+			    }
+			});
+		}
+	});
+
+	$(document).on("click", ".showEditComment", function(){
+		var commentPk = $(this).data("commentPk");
+		var commentDiv = $(this).parents("div.comment");
+		var clone = $("div#commentList > div.addCommentBox").clone(true);
+		
+		clone.find("button.addCommentBtn").attr({"class" : "editCommentBtn btn btn-sm", "data-comment-pk" : commentPk})
+		  .text("수정").after("&nbsp;<button class=\"cancelEdit btn btn-sm\" data-parent-class=\""+ commentDiv.parent().attr("class") + "\">취소</button>");
+		clone.find("input.commentWriter").attr({"value" : commentDiv.find("p.commentTitle span.writer").text(), "class" : "form-control disabled", "disabled" : true});
+		clone.find("textarea.comment").val(commentDiv.find("p.comment").text());
+		
+		commentDiv.after(clone);
+		
+		commentDiv.hide();
+	});
+
+	$(document).on("click", ".editCommentBtn", function(){
+		if (confirm("댓글 수정하시겠습니까?")) {
+			var commentDiv = $(this).parents("div.addCommentBox");
+			var commentPk = $(this).data("commentPk");
+
+			$.ajax({
+				url : '/board_board/edit-comment',
+			    type : 'POST',
+			    dataType : 'json',
+			    data : {
+				    'commentPk' : commentPk,
+				    'password' : commentDiv.find(".editPassword").val(),
+				    'comment' : commentDiv.find(".comment").val()
+			    },
+			    success : function(data){
+			    	alert(data.result ? data.message : "댓글 수정 중 문제가 발생하였습니다.\n" + data.message);
+			    	if (data.result) {
+				    	window.location.reload();
+				    }
+			    }
+			});
+		}
+	});
+
+	$(".deleteCommentBtn").on("click", function(){
+		var pw = $(this).prev(".delPassword");
+		if (pw.is(":hidden")) {
+			pw.show();
+		} else {
+			if (pw.val().length < 4) {
+				pw.hide();
+				
+				return false;
+			}
+			
+			if (confirm("댓글을 삭제하시겠습니까?")) {
+				var commentPk = $(this).data("commentPk");
+
+				$.ajax({
+					url : '/board_board/delete-comment',
+				    type : 'POST',
+				    dataType : 'json',
+				    data : {
+					    'commentPk' : commentPk,
+					    'password' : pw.val(),
+				    },
+				    success : function(data){
+				    	alert(data.result ? data.message : "댓글 삭제 중 문제가 발생하였습니다.\n" + data.message);
+				    	if (data.result) {
+					    	window.location.reload();
+					    }
+				    }
+				});
+			}
+		}
+	});
+
+	$(".showReComment").on("click", function(){
+		var commentPk = $(this).data("commentPk");
+		var commentDiv = $(this).parents("div.comment");
+		var clone = $("div#commentList > div.addCommentBox").clone(true);
+		
+		clone.find("button.addCommentBtn").attr({"class" : "reCommentBtn btn btn-sm", "data-parent-pk" : commentPk})
+		  .text("작성").after("&nbsp;<button class=\"cancelEdit btn btn-sm\" data-parent-class=\""+ commentDiv.parent().attr("class") + "\">취소</button>");
+		
+		$(this).parents("div.commentBox").append(clone);
+	});
+
+	$(document).on("click", ".reCommentBtn", function(){
+		if (confirm("댓글 작성하시겠습니까?")) {
+			var contentPk = $(this).data("contentPk");
+			var parentPk = $(this).data("parentPk");
+			var commentDiv = $(this).parents("div.addCommentBox");
+			
+    		$.ajax({
+    			url : '/board_board/edit-comment',
+    		    type : 'POST',
+    		    dataType : 'json',
+    		    data : {
+    			    'contentPk' : contentPk,
+    			    'parentPk' : parentPk,
+    			    'writer' : commentDiv.find(".commentWriter").val(),
+    			    'password' : commentDiv.find(".editPassword").val(),
+    			    'comment' : commentDiv.find(".comment").val()
+    		    },
+    		    success : function(data){
+    		    	alert(data.result ? data.message : "댓글 작성 중 문제가 발생하였습니다.\n" + data.message);
+    			    if (data.result) {
+    			    	window.location.reload();
+    			    }
+    		    }
+    		});
+		}
+	});
+
+	$(document).on("click", "button.cancelEdit", function(){
+		console.log($(this).parents("." + $(this).data("parentClass")).children("div.comment"));
+		if (confirm("취소하시겠습니까?")) {
+			$(this).parents("." + $(this).data("parentClass")).children("div.comment").show();
+			$(this).parents("div.addCommentBox").remove();
+		}
+	});    
+});
+</script>
