@@ -8,7 +8,7 @@
         <action>list</action>
         <accesskey>A</accesskey>
 		<params>
-        	<noBoard>1</noBoard>
+        	<boardPk>0</boardPk>
         </params>
         <pages>
 	        <total>
@@ -17,7 +17,7 @@
 		        <controller>board_board</controller>
 		        <action>list</action>
 		        <params>
-		        	<noBoard>1</noBoard>
+		        	<boardPk>0</boardPk>
 		        </params>
 		        <pages>
 		        	<read>
@@ -25,6 +25,9 @@
 				        <module>default</module>
 				        <controller>board_board</controller>
 				        <action>read-content</action>
+				        <params>
+				        	<boardPk>0</boardPk>
+				        </params>
 				        <visible>0</visible>
 		        	</read>
 		        	<edit>
@@ -32,6 +35,9 @@
 				        <module>default</module>
 				        <controller>board_board</controller>
 				        <action>edit-content</action>
+        		        <params>
+		        			<boardPk>0</boardPk>
+		        		</params>
 				        <visible>0</visible>
 		        	</edit>
 		        </pages>
@@ -43,6 +49,7 @@
         <module>default</module>
         <controller>gallery_gallery</controller>
         <action>total-list</action>
+        <visible>0</visible>
     </gallery>
     <config>
         <label>설정</label>

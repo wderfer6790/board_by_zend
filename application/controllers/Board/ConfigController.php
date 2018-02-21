@@ -31,23 +31,19 @@ class Board_ConfigController extends Zend_Controller_Action
         $addForm->setElementDecorators(array(
     		'ViewHelper',
     		array('Label', array('separator' => " ")),
-    		array('HtmlTag', array('tag' => 'div', 'class' => 'form-group')),
+    		array('HtmlTag', array('tag' => 'div', 'class' => 'form-group col-xs-3 ')),
         ));
-        $addForm->addElement("text", "name", array("label" => "게시판명", "class" => "form-control input-sm"));
-        $addForm->addElement("text", "ordered", array("label" => "정렬순서", "class" => "form-control input-sm"));
-        $addForm->addElement("checkbox", "isDisplay", array("label" => "표시유무", "class" => ""));
-        $addForm->getElement("isDisplay")->setDecorators(array(
-    	   'ViewHelper',
-            array('Label', array('separator' => " ")),
-//             array('Label', array('separator' => " ", 'placement' => Zend_Form_Decorator_Label::IMPLICIT_APPEND)),
-//             array('decorator' => array('checkDiv' => 'HtmlTag'), 'options' => array('tag' => 'div', 'class' => 'checkbox')),
-        ));
+        $addForm->addElement("text", "name", array("label" => "게시판명", "class" => "form-control input-sm name", "maxlength" => "16"));
+        $addForm->getElement("name")->getDecorator("HtmlTag")->setOption("class", "form-group col-xs-5");
+        $addForm->addElement("text", "ordered", array("label" => "정렬순서", "class" => "form-control input-sm ordered"));
+
         $addForm->addElement("submit", "addButton", array("label" => "추가", "class" => "btn btn-sm"));
         $addForm->getElement("addButton")->removeDecorator('Label')->removeDecorator('HtmlTag');
         
         if ($this->getRequest()->isPost()) {
             $data = $this->getRequest()->getPost();
             $this->_board->addBoard($data);
+            $this->view->message = "추가되었습니다.";
         }
         
         $this->view->addForm = $addForm;
@@ -124,8 +120,8 @@ class Board_ConfigController extends Zend_Controller_Action
         	    
         	    $boardTable->getAdapter()->beginTransaction();
         	    
-        	    $select = $boardTable->select()->from($boardTable, array('pk'))->where("boardPk = ?", $params['pk']);
-        	    $contentPks = $boardTable->getAdapter()->fetchCol($select);
+        	    $select = $contentTable->select()->from($contentTable, array('pk'))->where("boardPk = ?", $params['pk']);
+        	    $contentPks = $contentTable->getAdapter()->fetchCol($select);
         	    foreach ($contentPks as $contentPk) {
         	        $commentTable->delete($commentTable->getAdapter()->quoteInto("contentPk = ?", $contentPk));
         	        $fileTable->delete($commentTable->getAdapter()->quoteInto("contentPk = ?", $contentPk));
@@ -134,7 +130,7 @@ class Board_ConfigController extends Zend_Controller_Action
         	    
         	    $boardTable->delete($boardTable->getAdapter()->quoteInto("pk = ?", $params['pk']));
         	    
-        	    $result['message'] = "게시판이 삭제되었습니다. " . number_format($contentPks) . "건의 게시물이 삭제되었습니다.";
+        	    $result['message'] = "게시판이 삭제되었습니다. " . number_format(count($contentPks)) . "건의 게시물이 삭제되었습니다.";
         	    $result['result'] = true;
         	    
         	    $boardTable->getAdapter()->commit();

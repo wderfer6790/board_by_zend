@@ -1,5 +1,4 @@
 <?php
-
 // Define path to application directory
 defined('APPLICATION_PATH')
     || define('APPLICATION_PATH', realpath(dirname(__FILE__) . '/../application'));
@@ -19,9 +18,17 @@ set_include_path(implode(PATH_SEPARATOR, $paths));
 require_once 'Zend/Application.php';
 
 // Create application, bootstrap, and run
+try {
 $application = new Zend_Application(
     APPLICATION_ENV,
     APPLICATION_PATH . '/configs/application.ini'
 );
+
 $application->bootstrap()
             ->run();
+} catch (Exception $e) {
+    echo $e->getLine() . " - " . $e->getCode() . " : " . $e->getMessage();
+    echo "<pre>";
+	var_export($e->getTrace());
+	echo "</pre>";
+}

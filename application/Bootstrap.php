@@ -25,7 +25,8 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
         $viewRenderer->setView($view);
         
         // navigation 
-        $config = new Zend_Config_Xml(APPLICATION_PATH . '\configs\navigation.xml');
+        $config = new Zend_Config_Xml(
+            file_get_contents(APPLICATION_PATH . DIRECTORY_SEPARATOR . "configs" . DIRECTORY_SEPARATOR . "navigation.xml"));
         $navigation = new Zend_Navigation($config);
         $boards = Hsp_System::getInstance()->getPackage('board')->getBoards("isDisplay = 1");
         $boardPage = $navigation->findOneBy('accesskey', 'A');
@@ -38,7 +39,29 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
                 'action'     => 'list',
                 'params'     => array(
                     'boardPk' => $row->pk
-                )
+                ),
+                'pages' => array(
+                    'read' => array(
+                        'label'      => '게시글 열람',
+                        'module'     => 'default',
+                        'controller' => 'board_board',
+                        'action'     => 'read-content',
+                        'visible'    => 0,
+                        'params'     => array(
+                    		'boardPk' => $row->pk
+                        )
+                    ),
+                    'edit' => array(
+                		'label'      => '게시글 작성',
+                		'module'     => 'default',
+                		'controller' => 'board_board',
+                		'action'     => 'edit-content',
+                        'visible'    => 0,
+                		'params'     => array(
+            				'boardPk' => $row->pk
+                		)
+                    )
+                )   
             ));
         }
         $view->navigation($navigation);

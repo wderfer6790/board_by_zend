@@ -30,6 +30,8 @@ class Hsp_Board_Table_Content extends Hsp_Db_Table_Abstract
 CREATE TABLE % (
     boardPk int NOT NULL COMMENT '게시판 고유키',
     pk int NOT NULL AUTO_INCREMENT COMMENT '게시글 고유키',
+    writer varchar(32) NOT NULL COMMENT '작성자',
+    password varchar(32) NOT NULL COMMENT '비밀번호',
     title varchar(64) NOT NULL COMMENT '게시글 제목',
     content text NULL COMMENT '게시글 내용',
     tag varchar(32) NULL COMMENT '게시글 태그',

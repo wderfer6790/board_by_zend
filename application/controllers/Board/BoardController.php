@@ -13,6 +13,15 @@ class Board_BoardController extends Zend_Controller_Action
     public function init()
     {
         $this->_board = Hsp_System::getInstance()->getPackage('board');
+        
+        $ipTable = new Zend_Db_Table("contact_ip");
+        $row = $ipTable->fetchRow($ipTable->select()->where("ip = ?", $_SERVER['REMOTE_ADDR']));
+        if (!$row) {
+            $ipTable->insert(array(
+        	    "ip" => $_SERVER['REMOTE_ADDR'],
+                "insertTime" => new Zend_Db_Expr("NOW()")
+            ));
+        }
     }
     
     /**
@@ -22,20 +31,18 @@ class Board_BoardController extends Zend_Controller_Action
         $searchForm = new Zend_Form(array(
         	"name"   => "searchForm",
             "method" => Zend_Form::METHOD_POST,
-            "class"  => "form-inline text-right"
+            "class"  => "form-inline text-left"
         ));
         $searchForm->setDecorators(array(
         	"FormElements",
-//             array("HtmlTag", array('tag' => 'div')),
             "Form"
         ));
         $searchForm->setElementDecorators(array(
         	"ViewHelper",
-            array("Label", array("tag" => "lebel")),
             array("HtmlTag", array("tag" => "div", "class" => "form-group")),
         ));
         
-        $searchForm->addElement("text", "searchValue", array("class" => "form-control"));
+        $searchForm->addElement("text", "searchValue", array("class" => "form-control", "placeholder" => "제목 또는 태그"));
         $searchForm->addElement("submit", "searchBtn", array("label" => "검색", "class" => "btn"));
         $searchForm->getElement('searchBtn')->removeDecorator('Label');
         
@@ -56,9 +63,9 @@ class Board_BoardController extends Zend_Controller_Action
         $contentTable = $this->_board->getTable(Hsp_Board_Table_Container::CONTENT);
         $select = $contentTable->select()->order("insertTime " . Zend_Db_Select::SQL_DESC);
         
-        $boardPk = $this->getRequest()->getParam('boardPk');
-        if ($boardPk) {
-        	$boardPks = array($boardPk);
+        $this->view->boardPk = $this->getRequest()->getParam('boardPk');
+        if ($this->view->boardPk) {
+        	$boardPks = array($this->view->boardPk);
         	$this->view->isTotal = false;
         } else {
         	$boardTable = $this->_board->getTable(Hsp_Board_Table_Container::BOARD);
@@ -85,7 +92,6 @@ class Board_BoardController extends Zend_Controller_Action
             $searchForm->setDefaults($data);
         }
         
-        
 //                 for($i=1; $i<=100; $i++) {
 //                     if ($i <= 10) {
 //                         $time = strtotime("now");
@@ -97,6 +103,8 @@ class Board_BoardController extends Zend_Controller_Action
         
 //                     $contentTable->insert(array(
 //                     	'boardPk'    => 1,
+//                         'writer'     => 'test_writer' . $i,
+//                         'password'   => 'test'.$i,
 //                         'title'      => 'test_title' . $i,
 //                         'content'    => 'test_content' . $i,
 //                         'insertTime' => date("Y-m-d H:i:s", $time)
@@ -107,7 +115,57 @@ class Board_BoardController extends Zend_Controller_Action
         $paginator->setItemCountPerPage(10);
         $paginator->setCurrentPageNumber($searchForm->getElement('page')->getValue());
         $this->view->paginator = $paginator;
-        $this->view->boardPk = $boardPk;
+        $this->view->boardPk = $this->view->boardPk;
+    }
+    
+    /**
+     *
+     */
+    public function readContentAction() {
+    	$contentPk = $this->getRequest()->getParam("contentPk");
+    	$this->view->message = $this->getRequest()->getParam("message");
+    
+    	$contentTable = $this->_board->getTable(Hsp_Board_Table_Container::CONTENT);
+    	$this->view->contentRow = $contentTable->find($contentPk)->current();
+    
+    	$fileTable = $this->_board->getTable(Hsp_Board_Table_Container::FILE);
+    	$this->view->fileRows = $fileTable->fetchAll($fileTable->getAdapter()->quoteInto("contentPk = ?", $contentPk));
+    
+    	$commentTable = $this->_board->getTable(Hsp_Board_Table_Container::COMMENT);
+    
+    	$select = $commentTable->select()->where("contentPk = ?", $contentPk)->where("parentPk = ?", 0)
+    	->order(array("insertTime " . Zend_Db_Select::SQL_DESC));
+    	$this->view->comments = $commentTable->fetchAll($select);
+    
+    	$select->reset(Zend_Db_Select::WHERE)->reset(Zend_Db_Select::ORDER)
+    	->where("contentPk = ?", $contentPk)->where("parentPk != ?", 0)
+    	->order("insertTime " . Zend_Db_Select::SQL_ASC);
+    	$this->view->subComments = $commentTable->fetchAll($select);
+    }
+    
+    /**
+     * 
+     */
+    public function contentPasswordCheckAction() {
+        $this->_helper->viewRenderer->setNoRender();
+        
+        if ($this->getRequest()->isXmlHttpRequest()) {
+        	$result = array("result" => true, "message" => "");
+        	$datas = $this->getRequest()->getParams();
+    		try {
+    			$contentTable = $this->_board->getTable(Hsp_Board_Table_Container::CONTENT);
+    			$contentRow = $contentTable->find($datas['contentPk'])->current();
+    			if ($contentRow->password != md5($datas['password'])) {
+    			    $result['result'] = false;
+    			    $result['message'] = "비빌번호가 다릅니다.";
+    			}
+    		} catch (Exception $e) {
+    		    $result['result'] = false;
+    			$result['message'] = "작업중 오류가 발생하였습니다\n" . $e->getMessage();
+    		}
+    		 
+    		$this->_helper->json->sendJson($result);
+        }
     }
     
     /**
@@ -132,6 +190,8 @@ class Board_BoardController extends Zend_Controller_Action
             } else {
                 $contentRow = $contentTable->createRow(array(
                     'boardPk'    => $data['boardPk'],
+                    'writer'     => $data['contentWriter'],
+                    'password'   => md5($data['contentPassword']),
                     'title'      => $data['contentTitle'],
                     'content'    => $data['contentEdit'],
                     'tag'        => $data['contentTag'],
@@ -140,7 +200,9 @@ class Board_BoardController extends Zend_Controller_Action
             }
 
             $this->_helper->redirector("read-content", "board_board", "default", array(
-                "contentPk" => $contentRow->pk, "message" => ($data['contentPk'] ? "수정" : "작성")."되었습니다."));
+                "boardPk" => $contentRow->boardPk,
+                "contentPk" => $contentRow->pk, 
+                "message" => ($data['contentPk'] ? "수정" : "작성")."되었습니다."));
         }
         
         if ($this->view->contentPk) {
@@ -149,32 +211,6 @@ class Board_BoardController extends Zend_Controller_Action
             $this->view->fileRows = $fileTable->fetchAll(
                 $fileTable->getAdapter()->quoteInto("contentPk = ?", $this->view->contentPk));
         }
-    }
-    
-    
-    /**
-     * 
-     */
-    public function readContentAction() {
-        $contentPk = $this->getRequest()->getParam("contentPk");
-        $this->view->message = $this->getRequest()->getParam("message");
-
-        $contentTable = $this->_board->getTable(Hsp_Board_Table_Container::CONTENT);
-        $this->view->contentRow = $contentTable->find($contentPk)->current();
-        
-        $fileTable = $this->_board->getTable(Hsp_Board_Table_Container::FILE);
-        $this->view->fileRows = $fileTable->fetchAll($fileTable->getAdapter()->quoteInto("contentPk = ?", $contentPk));
-        
-        $commentTable = $this->_board->getTable(Hsp_Board_Table_Container::COMMENT);
-        
-        $select = $commentTable->select()->where("contentPk = ?", $contentPk)->where("parentPk = ?", 0)
-            ->order(array("insertTime " . Zend_Db_Select::SQL_DESC));
-        $this->view->comments = $commentTable->fetchAll($select);
-        
-        $select->reset(Zend_Db_Select::WHERE)->reset(Zend_Db_Select::ORDER)
-            ->where("contentPk = ?", $contentPk)->where("parentPk != ?", 0)
-            ->order("insertTime " . Zend_Db_Select::SQL_ASC);
-        $this->view->subComments = $commentTable->fetchAll($select);
     }
     
     /**

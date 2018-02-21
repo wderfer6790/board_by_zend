@@ -25,7 +25,7 @@ class Hsp_Board_Table_Board extends Hsp_Db_Table_Abstract
 CREATE TABLE % (
     pk int NOT NULL AUTO_INCREMENT COMMENT '고유키',
     name varchar(16) NOT NULL COMMENT '게시판명',
-    ordered tinyint(3) default 0 COMMENT '정렬순서',
+    ordered tinyint UNSIGNED default 0 COMMENT '정렬순서',
     isDisplay tinyint(1) default 1 COMMENT '표시유무',
     insertTime datetime default '0000-00-00 00:00:00' COMMENT '기록시간',
     updateTime datetime default '0000-00-00 00:00:00' COMMENT '변경시간',

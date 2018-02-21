@@ -27,17 +27,33 @@ button.removeFile {
 <?php
 $this->headScript()->appendFile($this->baseUrl('smartEditer2/js/service/HuskyEZCreator.js'));
 $action = $this->contentPk ? "수정" : "작성";
+$this->pageTitle = "게시글 " . $action;
 
+$contentWriterAttrs = array("class" => "form-control", "maxlength" => 32);
+if ($this->contentRow) {
+    $contentWriterAttrs['disabled'] = "disabled";
+}
 $content =
-    "<div class=\"form-group\">" 
-    .$this->formText("contentTitle", $this->contentRow ? $this->contentRow->title : null, array("class" => "form-control"))
+    "<div class=\"form-group\">"
+    . $this->formLabel("contentWriter-label", "작성자", array("for" => "contentWriter"))
+    . $this->formText("contentWriter", $this->contentRow ? $this->contentRow->writer : null, $contentWriterAttrs)
     . "</div>"
-    . "<div class=\"form-group\">"
+	. "<div class=\"form-group\">"
+    . $this->formLabel("contentTitle-label", "제목", array("for" => "contentTitle"))
+    . $this->formText("contentTitle", $this->contentRow ? $this->contentRow->title : null, array("class" => "form-control", "maxlength" => 64))
+    . "</div>";
+if (!$this->contentRow) {
+    $content .= "<div class=\"form-group\">"
+        . $this->formLabel("contentPassword-label", "비밀번호", array("for" => "contentPassword"))
+        . $this->formPassword("contentPassword", null, array("class" => "form-control", "maxlength" => 12))
+        . "</div>";
+}
+$content .= "<div class=\"form-group\">"
     . $this->formTextarea("contentEdit", $this->contentRow ? $this->contentRow->content : null, array("rows" => 10, "cols" => 100, "class" => "form-control"))
     . "</div>"
     . "<div class=\"form-group\">"
     . $this->formLabel("contentTag-label", "태그", array("for" => "contentTag"))
-    . $this->formText("contentTag", $this->contentRow ? $this->contentRow->tag : null, array("class" => "form-control"))
+    . $this->formText("contentTag", $this->contentRow ? $this->contentRow->tag : null, array("class" => "form-control", "maxlength" => "32"))
     . "</div>";
 
 $content .= "<div id=\"filesDiv\" class=\"panel panel-default\">";
@@ -75,7 +91,26 @@ nhn.husky.EZCreator.createInIFrame({
 
 $(document).ready(function(){
 	$("#editBtn").on("click", function(){
-		if (confirm("<?php echo $action?>" + "하시겠습니까?")) {
+		var isError = false;
+		$.each($("#contentForm #contentWriter, #contentForm #contentPassword, #contentForm #contentTitle"), function(){
+			if ($(this).val().trim().length < 1) {
+				isError = true;
+				alert('값을 입력해주십시요.');
+				$(this).focus();
+
+				return false;
+			}
+
+			if ($(this).attr("id") == "contentPassword" && $(this) && $(this).val().trim().length < 4) {
+				isError = true;
+				alert('비밀번호를 4자리 이상 입력해주십시오.');
+				$(this).focus();
+
+				return false;				
+			}
+		});
+		
+		if (!isError && confirm("<?php echo $action?>" + "하시겠습니까?")) {
 	    	oEditors.getById["contentEdit"].exec("UPDATE_CONTENTS_FIELD", []);
 	    
 	    	$("#contentForm").submit();
@@ -85,6 +120,14 @@ $(document).ready(function(){
 	$(".fileDownload").on("click", function(){
 		if (confirm("'" + $(this).text() + "'를 다운로드 하시겠습니까?")) {
 			  $("#downloadIframe").attr("src", "/board_board/download-content-file/filePk/" + $(this).data("filePk"));
+		}
+	});
+
+	$(document).on("change", "input[type=file].contentFiles", function(){
+		var maxSizeByte = 16777216;
+		if (this.files[0].size > maxSizeByte) {
+			alert("파일 사이즈는 16MB를 초과할 수 없습니다.");
+		    $(this).val("");
 		}
 	});
 

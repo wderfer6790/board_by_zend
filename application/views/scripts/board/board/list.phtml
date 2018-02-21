@@ -30,22 +30,24 @@ echo $this->searchForm;
 
 <table id="contentList" class="table table-hover">
     <tr>
-        <th class="title col-md-10" data-order-field="title">제목</th>
+        <th class="title col-md-8" data-order-field="title">제목</th>
+        <th class="writer col-md-2" data-order-field="writer">작성자</th>
         <th class="insertTime col-md-2" data-order-field="insertTime">작성일</th>
     </tr>
 <?php
 if ($this->paginator->getTotalItemCount() > 0) {
     foreach ($this->paginator->getCurrentItems() as $item) {
         echo "<tr>";
-        echo "<td class=\"title\"><a href=\"/board_board/read-content/contentPk/{$item['pk']}\">" . $item['title'] . "</a></td>";
+        echo "<td class=\"title\"><a href=\"/board_board/read-content/boardPk/{$this->boardPk}/contentPk/{$item['pk']}\">" . $item['title'] . "</a></td>";
+        echo "<td class=\"title\">" . $item['writer'] . "</td>";
         echo "<td class=\"insertTime\">";
         $time = strtotime($item['insertTime']);
         echo strtotime(date("Y-m-d")) <= $time ? date("H:i", $time) : date("Y-m-d", $time);
         echo "</td>";
-        echo "</tr>";
+        echo "</tr>".PHP_EOL;
     }
 } else {
-    echo "<tr><td class=\"emptyRow\" rowspan=2>게시글이 없습니다</td></tr>";
+    echo "<tr><td class=\"emptyRow\" colspan=3>게시글이 없습니다</td></tr>";
 }
 ?>    
     
@@ -60,7 +62,7 @@ $(document).ready(function(){
 	$("#contentList th").each(function(){
 		if ($(this).data("orderField") == $("#orderField").val()) {
 			$(this).css("color", "#337ab7");
-			$(this).append($("#order").val() == 'ASC' ? ' ▼' : ' ▲');
+			$(this).append($("#order").val() == 'ASC' ? ' ▲' : ' ▼');
 		}
 	});
 	$("#addContent").on("click", function(){

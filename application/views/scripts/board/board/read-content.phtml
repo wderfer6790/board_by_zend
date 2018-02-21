@@ -1,6 +1,7 @@
 <style>
 input[type='password'].delPassword {
 	display:none;
+	width: 130px;
 }
 
 div.commentBox {
@@ -48,6 +49,7 @@ span.fileDownload {
 }
 div#commentList {
 	margin-top: 60px;
+	margin-bottom: 100px;
 	border-top: 1px solid #ddd;
 }
 div.addCommentBox .form-horizontal .form-group {
@@ -55,7 +57,9 @@ div.addCommentBox .form-horizontal .form-group {
 	margin-right: 0;
 }
 </style>
-
+<?php 
+$this->pageTitle = "게시물 열람";  
+?>
 <div id="content-header">
     <h3>
     <?php echo $this->contentRow->title;?>
@@ -85,8 +89,8 @@ foreach ($this->fileRows as $row) {
 </div>
 
 <?php 
-echo $this->formButton("editBtn", "수정", array("class" => "btn btn-sm", "data-content-pk" => $this->contentRow->pk));
-echo "&nbsp;" . $this->formButton("deleteBtn", "삭제", array("class" => "btn btn-sm", "data-content-pk" => $this->contentRow->pk));
+echo $this->formButton("editBtn", "수정", array("class" => "btn btn-sm", "data-is-edit" => true));
+echo "&nbsp;" . $this->formButton("deleteBtn", "삭제", array("class" => "btn btn-sm", "data-is-edit" => false));
 ?>
 
 <div id="commentList">
@@ -99,7 +103,7 @@ echo $this->formText("commentWriter", null, array("id" => "", "class" => "commen
 echo "</div>";
 echo "<div class=\"form-group\" style=\"margin-right: 10px;\">";
 echo $this->formLabel("editPassword-label", "비밀번호", array("for" => "editPassword", "style" => "margin-right: 5px;"));
-echo $this->formPassword("editPassword", null, array("id" => "", "class" => "editPassword form-control input-sm", "style" => "margin-right: 10px;"));
+echo $this->formPassword("editPassword", null, array("id" => "", "class" => "editPassword form-control input-sm", "style" => "margin-right: 10px;", "maxlength" => "4"));
 echo "</div>";
 echo "<div class=\"form-group\">";
 echo $this->formButton("addCommentBtn", "작성", array("id" => "", "class" => "addCommentBtn btn btn-sm", "data-content-pk" => $this->contentRow->pk));
@@ -118,7 +122,7 @@ foreach ($this->comments as $commentRow) {
     echo "&nbsp; &nbsp;<small>" . ($commentRow->updateTime != "0000-00-00 00:00:00" ? $commentRow->insertTime : $commentRow->insertTime) . "</small></p>";
     echo "<p class=\"comment\">" . $commentRow->comment . "</p>";
     echo $this->formButton("showEditComment", "수정", array("id" => "", "class" => "showEditComment btn btn-xs", "data-comment-pk" => $commentRow->pk));
-    echo "&nbsp;" . $this->formPassword("delPassword", null, array("id" => "", "class" => "delPassword form-control"));
+    echo "&nbsp;" . $this->formPassword("delPassword", null, array("id" => "", "class" => "delPassword form-control input-sm", "maxlength" => "4"));
     echo "&nbsp;" . $this->formButton("deleteBtn", "삭제", array("id" => "", "class" => "deleteCommentBtn btn btn-xs", "data-comment-pk" => $commentRow->pk));
     echo "&nbsp;" . $this->formButton("reCommentBtn", "답글", array("id" => "", "class" => "showReComment btn btn-xs", "data-comment-pk" => $commentRow->pk));
     echo "</div>";
@@ -131,8 +135,8 @@ foreach ($this->comments as $commentRow) {
         echo "&nbsp; &nbsp;<small>" . ($subCommentRow->updateTime != "0000-00-00 00:00:00" ? $subCommentRow->insertTime : $subCommentRow->insertTime) . "</small></p>";
         echo "<p class=\"comment\">" . $subCommentRow->comment . "</p>";
         echo $this->formButton("editBtn", "수정", array("id" => "", "class" => "showEditComment btn btn-xs", "data-comment-pk" => $subCommentRow->pk));
-        echo $this->formPassword("delPassword", null, array("id" => "", "class" => "delPassword form-control"));
-        echo $this->formButton("deleteBtn", "삭제", array("id" => "", "class" => "deleteCommentBtn btn btn-xs", "data-comment-pk" => $subCommentRow->pk));
+        echo "&nbsp;" . $this->formPassword("delPassword", null, array("id" => "", "class" => "delPassword form-control input-sm", "maxlength" => "4"));
+        echo "&nbsp;" . $this->formButton("deleteBtn", "삭제", array("id" => "", "class" => "deleteCommentBtn btn btn-xs", "data-comment-pk" => $subCommentRow->pk));
         echo "</div>";
         echo "</div>";
     }
@@ -142,42 +146,116 @@ foreach ($this->comments as $commentRow) {
 </div>
 <iframe id="downloadIframe"></iframe>
 
+<div class="modal fade passwordModal">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4>비빌번호 입력 <small class="subTitle"></small></h4>
+            </div>
+            <div class="modal-body">
+                <input type="password" class="form-control input-sm password" maxlength=12/>
+            </div>
+            <div class="modal-footer">
+                <input type="button" class="btn btn-sm confirmPassword" value="확인" data-content-pk="<?php echo $this->contentRow->pk; ?>"/>
+                <input type="button" class="btn btn-sm cancelPassword" value="취소" />
+                <input type="hidden" class="isEdit" value="" />
+            </div>
+        </div>
+    </div>
+</div>
+
 <script type="text/javascript">
 $(document).ready(function(){
 	var message = "<?php echo $this->message; ?>";
 	if (message) {
-		alert($("#message").val());
+		alert(message);
 	}
+
+	$("input[type=password].editPassword, input[type=password].delPassword").on("keydown", function(e){
+		var keys = [8, 9, 16, 35, 36, 46];
+		if (!((e.keyCode >= 48 && e.keyCode <= 57) || (e.keyCode >= 96 && e.keyCode <= 105) || keys.indexOf(e.keyCode) != -1)) {
+			e.preventDefault();
+		}
+	});
 
 	$(".fileDownload").on("click", function(){
 		if (confirm("'" + $(this).text() + "'를 다운로드 하시겠습니까?")) {
 			  $("#downloadIframe").attr("src", "/board_board/download-content-file/filePk/" + $(this).data("filePk"));
 		}
-	});	
-
-	$("#editBtn").on("click", function(){
-		window.location = "/board_board/edit-content/contentPk/" + $(this).data("content-pk");
 	});
 
-	$("#deleteBtn").on("click", function() {
-		var pk = $(this).data("content-pk");
-		if (confirm("게시글을 삭제하시겠습니까?")) {
-	    	$.ajax({
-	    		url:'/board_board/delete-content',
-	    		type: 'POST',
-	    		dataType: 'json',
-	    		data: {'contentPk' : pk},
-	    		success: function(data){
-	            	alert(data.result ? data.message : "게시글 삭제 중 문제가 발생하였습니다.\n" + data.message);
-	            	window.location = "/board_board/list/boardPk/<?php echo $this->contentRow->boardPk;?>";
-	    		}
-	    	});	
+	$("#editBtn, #deleteBtn").on("click", function(){
+		$(".passwordModal input[type=hidden].isEdit").val($(this).data("isEdit"));
+		$(".passwordModal").modal("show");
+	});
+
+	$(".passwordModal").modal({backdrop: 'static', keyboard: false, show: false});
+	$(".passwordModal").on("shown.bs.modal", function () {
+		$("input[type=password].password").focus();
+	});
+	$(".passwordModal").on("show.bs.modal", function () {
+		  var isEdit = $(".passwordModal input[type=hidden].isEdit").val();
+		  $(".passwordModal small.subTitle").text(isEdit ? "게시물 수정" : "게시물 삭제");
+	});
+	
+	$(".passwordModal").on("hidden.bs.modal", function () {
+		$(".passwordModal small.subTitle").text("");
+		$("input[type=password].password").val("");
+		$("input[type=hidden].isEdit").val("");
+	});
+	
+	$("input[type=button].confirmPassword").on("click", function(e){
+		var password = $("input[type=password].password");
+		if (password.val().length < 1) {
+			alert("비밀번호를 입력해주십시오.");
+			password.focus();
+			return false;
 		}
+
+		var contentPk = $(this).data("content-pk");
+		var isError = false;
+		$.ajax({
+			async: false,
+       		url:'/board_board/content-password-check',
+       		type: 'POST',
+       		dataType: 'json',
+       		data: {'contentPk' : contentPk, 'password' : password.val()},
+       		success: function(data){
+           		if (!data.result) {
+               		alert(data.message);
+               		isError = true;
+           		}
+       		}
+        });
+        if (isError) {
+            return false;
+        }
+		
+		var isEdit = $(".passwordModal input[type=hidden].isEdit").val();
+		if (isEdit) {
+			window.location = "/board_board/edit-content/boardPk/" + <?php echo $this->contentRow->boardPk;?> + "/contentPk/" + contentPk;
+		} else {
+	    	$.ajax({
+           		url:'/board_board/delete-content',
+           		type: 'POST',
+           		dataType: 'json',
+           		data: {'contentPk' : contentPk},
+           		success: function(data){
+                   	alert(data.result ? data.message : "게시글 삭제 중 문제가 발생하였습니다.\n" + data.message);
+                	window.location = "/board_board/list/boardPk/<?php echo $this->contentRow->boardPk;?>";
+           		}
+            });
+		}
+	});
+	
+	$("input[type=button].cancelPassword").on("click", function(){
+		$(".passwordModal").modal("hide");
 	});
 
 	$(document).on("click", ".addCommentBtn", function(){
-		if (confirm("댓글 작성하시겠습니까?")) {
-			var commentDiv = $(this).parents("div.addCommentBox");
+		var commentDiv = $(this).parents("div.addCommentBox");
+		
+		if (validate(commentDiv) && confirm("댓글 작성하시겠습니까?")) {
 			var contentPk = $(this).data("contentPk");
 
 			$.ajax({
@@ -216,8 +294,8 @@ $(document).ready(function(){
 	});
 
 	$(document).on("click", ".editCommentBtn", function(){
-		if (confirm("댓글 수정하시겠습니까?")) {
-			var commentDiv = $(this).parents("div.addCommentBox");
+		var commentDiv = $(this).parents("div.addCommentBox");
+		if (validate(commentDiv) && confirm("댓글 수정하시겠습니까?")) {
 			var commentPk = $(this).data("commentPk");
 
 			$.ajax({
@@ -252,7 +330,7 @@ $(document).ready(function(){
 			
 			if (confirm("댓글을 삭제하시겠습니까?")) {
 				var commentPk = $(this).data("commentPk");
-
+			    
 				$.ajax({
 					url : '/board_board/delete-comment',
 				    type : 'POST',
@@ -284,10 +362,10 @@ $(document).ready(function(){
 	});
 
 	$(document).on("click", ".reCommentBtn", function(){
-		if (confirm("댓글 작성하시겠습니까?")) {
+		var commentDiv = $(this).parents("div.addCommentBox");
+		if (validate(commentDiv) && confirm("댓글 작성하시겠습니까?")) {
 			var contentPk = $(this).data("contentPk");
 			var parentPk = $(this).data("parentPk");
-			var commentDiv = $(this).parents("div.addCommentBox");
 			
     		$.ajax({
     			url : '/board_board/edit-comment',
@@ -316,6 +394,22 @@ $(document).ready(function(){
 			$(this).parents("." + $(this).data("parentClass")).children("div.comment").show();
 			$(this).parents("div.addCommentBox").remove();
 		}
-	});    
+	});
+
+	function validate(parent) {
+		var result = true;
+		$.each(parent.find("input:enabled, textarea"), function(){
+			if ($(this).val().trim().length == 0) {
+				alert("값을 입력해 주십시오");
+				$(this).focus();
+				result = false;
+				
+				return false;
+			}
+		});
+
+		return result;
+	}
+		    
 });
 </script>
