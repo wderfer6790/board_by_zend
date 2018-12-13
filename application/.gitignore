@@ -1,1 +1,5 @@
 /datas
+.idea/
+/library/Zend/
+/application/config/application.ini
+/public/.htaccess
